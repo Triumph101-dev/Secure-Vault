@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureVault - Zero-Knowledge Encryption</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landing-page" class="page active">
+        <div class="container">
+            <header>
+                <div class="logo">
+                    <h1>🔒 SecureVault</h1>
+                    <p class="tagline">Your Data. Your Device. Your Control.</p>
+                </div>
+            </header>
+
+            <main class="landing-content">
+                <div class="hero">
+                    <h2>Zero-Knowledge Encryption</h2>
+                    <p>Encrypt your files and notes directly in your browser. No servers. No tracking. No compromise.</p>
+                </div>
+
+                <div class="features">
+                    <div class="feature-card">
+                        <span class="icon">📁</span>
+                        <h3>File Encryption</h3>
+                        <p>Encrypt any file type up to 1GB with military-grade AES-256 encryption</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="icon">📝</span>
+                        <h3>Secure Notes</h3>
+                        <p>Create password-protected notes that never leave your device</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="icon">🔐</span>
+                        <h3>Complete Privacy</h3>
+                        <p>All encryption happens in your browser. We never see your data.</p>
+                    </div>
+                </div>
+
+                <div class="auth-section">
+                    <div id="auth-form">
+                        <!-- New User -->
+                        <div id="new-user-section" class="auth-box">
+                            <h3>First Time Here?</h3>
+                            <p>Create a master password to get started</p>
+
+                            <div class="input-group">
+                                <input type="email" id="user-email" placeholder="Your Email Address" class="input-field" onkeydown="if(event.key==='Enter'){event.preventDefault();createMasterPassword();}">
+                            </div>
+
+                            <div class="input-group">
+                                <input type="password" id="new-password" placeholder="Create Master Password" class="input-field">
+                                <button type="button" class="eye-btn" onclick="togglePasswordVisibility('new-password', this)"><i class="fas fa-eye"></i></button>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="password" id="confirm-password" placeholder="Confirm Password" class="input-field">
+                                <button type="button" class="eye-btn" onclick="togglePasswordVisibility('confirm-password', this)"><i class="fas fa-eye"></i></button>
+                            </div>
+
+                            <button type="button" onclick="event.preventDefault();createMasterPassword()" class="btn btn-primary btn-full">Get Started</button>
+                        </div>
+
+                        <!-- Returning User -->
+                        <div id="returning-user-section" class="auth-box" style="display:none;">
+                            <h3>Welcome Back</h3>
+                            <p>Enter your master password</p>
+                            <div class="input-group">
+                                <input type="password" id="master-password" placeholder="Master Password" class="input-field" onkeydown="if(event.key==='Enter'){event.preventDefault();login();}">
+                                <button type="button" class="eye-btn" onclick="togglePasswordVisibility('master-password', this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <button type="button" onclick="event.preventDefault();login()" class="btn btn-primary btn-full">Unlock Vault</button>
+                            <div class="auth-links">
+                                <button onclick="showRecoveryModal()" class="link-btn">Forgot Password?</button>
+                                <button onclick="resetVault()" class="link-btn danger-link">Reset Vault</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="password-strength" id="password-strength" style="display:none;">
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="strength-fill"></div>
+                        </div>
+                        <p id="strength-text"></p>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>How It Works</h3>
+                    <ol>
+                        <li>Create a strong master password</li>
+                        <li>Your password never leaves your browser</li>
+                        <li>All data is encrypted with AES-256 before storage</li>
+                        <li>Only you can decrypt your data with your password</li>
+                    </ol>
+                    <p class="warning">⚠️ <strong>Important:</strong> Register with your email so you can recover your password if forgotten.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- PASSWORD RECOVERY MODAL -->
+    <div id="recovery-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeRecoveryModal()">✕</button>
+
+            <!-- Step 1: Enter Email -->
+            <div id="recovery-step-1">
+                <div class="modal-icon">📧</div>
+                <h3>Password Recovery</h3>
+                <p>Enter your registered email address and we'll send you a recovery code.</p>
+                <input type="email" id="recovery-email" placeholder="Your registered email" class="input-field">
+                <button onclick="sendRecoveryCode()" class="btn btn-primary btn-full">Send Recovery Code</button>
+            </div>
+
+            <!-- Step 2: Enter Code -->
+            <div id="recovery-step-2" style="display:none;">
+                <div class="modal-icon">🔑</div>
+                <h3>Enter Recovery Code</h3>
+                <p>A 6-digit code was sent to your email. Enter it below. It expires in 15 minutes.</p>
+                <input type="text" id="recovery-code-input" placeholder="Enter 6-digit code" class="input-field code-input" maxlength="6">
+                <button onclick="verifyRecoveryCode()" class="btn btn-primary btn-full">Verify Code</button>
+                <button onclick="resendCode()" class="link-btn" id="resend-btn">Resend Code</button>
+            </div>
+
+            <!-- Step 3: New Password -->
+            <div id="recovery-step-3" style="display:none;">
+                <div class="modal-icon">🔒</div>
+                <h3>Set New Password</h3>
+                <p>Create a new strong master password for your vault.</p>
+                <div class="input-group">
+                    <input type="password" id="recovery-new-password" placeholder="New Master Password" class="input-field">
+                    <button type="button" class="eye-btn" onclick="togglePasswordVisibility('recovery-new-password', this)"><i class="fas fa-eye"></i></button>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="recovery-confirm-password" placeholder="Confirm New Password" class="input-field">
+                    <button type="button" class="eye-btn" onclick="togglePasswordVisibility('recovery-confirm-password', this)"><i class="fas fa-eye"></i></button>
+                </div>
+                <button onclick="resetPasswordWithCode()" class="btn btn-primary btn-full">Reset Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (Hidden Initially) -->
+    <div id="app-page" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">🔒 SecureVault</div>
+            <div class="nav-menu">
+                <button onclick="showSection('files')" class="nav-btn active" id="nav-files">📁 Files</button>
+                <button onclick="showSection('notes')" class="nav-btn" id="nav-notes">📝 Notes</button>
+                <button onclick="showSection('settings')" class="nav-btn" id="nav-settings">⚙️ Settings</button>
+                <button onclick="logout()" class="nav-btn logout">🚪 Logout</button>
+            </div>
+        </nav>
+
+        <main class="app-content">
+            <!-- File Encryption Section -->
+            <section id="files-section" class="section active">
+                <div class="section-header">
+                    <h2>File Encryption</h2>
+                    <p>Encrypt and decrypt your files securely</p>
+                </div>
+
+                <div class="tabs">
+                    <button onclick="switchTab('encrypt')" class="tab-btn active" id="tab-encrypt">Encrypt File</button>
+                    <button onclick="switchTab('decrypt')" class="tab-btn" id="tab-decrypt">Decrypt File</button>
+                </div>
+
+                <!-- Encrypt Tab -->
+                <div id="encrypt-tab" class="tab-content active">
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📤</div>
+                        <h3>Drag & Drop File Here</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="file-input" style="display:none;">
+                        <button onclick="document.getElementById('file-input').click()" class="btn btn-primary">Choose File</button>
+                    </div>
+
+                    <div id="file-info" style="display:none;">
+                        <div class="file-details">
+                            <p><strong>File:</strong> <span id="file-name"></span></p>
+                            <p><strong>Size:</strong> <span id="file-size"></span></p>
+                            <p><strong>Type:</strong> <span id="file-type"></span></p>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="encrypt-password" placeholder="Enter encryption password" class="input-field">
+                            <button type="button" class="eye-btn" onclick="togglePasswordVisibility('encrypt-password', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="encrypt-password-confirm" placeholder="Confirm password" class="input-field">
+                            <button type="button" class="eye-btn" onclick="togglePasswordVisibility('encrypt-password-confirm', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <button onclick="encryptFile()" class="btn btn-success">🔒 Encrypt File</button>
+                        <button onclick="cancelFileSelection()" class="btn btn-secondary">Cancel</button>
+                    </div>
+
+                    <div id="encrypt-progress" style="display:none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="encrypt-progress-fill"></div>
+                        </div>
+                        <p id="encrypt-status">Encrypting...</p>
+                    </div>
+                </div>
+
+                <!-- Decrypt Tab -->
+                <div id="decrypt-tab" class="tab-content">
+                    <div class="upload-area" id="decrypt-upload-area">
+                        <div class="upload-icon">🔓</div>
+                        <h3>Select Encrypted File</h3>
+                        <input type="file" id="decrypt-file-input" style="display:none;">
+                        <button onclick="document.getElementById('decrypt-file-input').click()" class="btn btn-primary">Choose Encrypted File</button>
+                    </div>
+
+                    <div id="decrypt-info" style="display:none;">
+                        <div class="file-details">
+                            <p><strong>File:</strong> <span id="decrypt-file-name"></span></p>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="decrypt-password" placeholder="Enter decryption password" class="input-field">
+                            <button type="button" class="eye-btn" onclick="togglePasswordVisibility('decrypt-password', this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <button onclick="decryptFile()" class="btn btn-success">🔓 Decrypt File</button>
+                        <button onclick="cancelDecryptSelection()" class="btn btn-secondary">Cancel</button>
+                    </div>
+
+                    <div id="decrypt-progress" style="display:none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="decrypt-progress-fill"></div>
+                        </div>
+                        <p id="decrypt-status">Decrypting...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notes Section -->
+            <section id="notes-section" class="section">
+                <div class="section-header">
+                    <h2>Secure Notes</h2>
+                    <button onclick="createNewNote()" class="btn btn-primary">➕ New Note</button>
+                </div>
+
+                <!-- Search -->
+                <div class="search-bar">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="note-search" placeholder="Search notes..." class="input-field" oninput="NoteManager.searchNotes(this.value)">
+                    </div>
+                </div>
+
+                <div class="notes-container">
+                    <div class="notes-list" id="notes-list">
+                        <p class="empty-state">No notes yet. Create your first secure note!</p>
+                    </div>
+
+                    <div class="note-editor" id="note-editor" style="display:none;">
+                        <input type="text" id="note-title" placeholder="Note Title" class="input-field">
+                        <textarea id="note-content" placeholder="Write your secure note here..." class="textarea-field" oninput="updateWordCount()"></textarea>
+                        <div class="note-meta-bar">
+                            <div class="word-count" id="word-count">0 words · 0 characters</div>
+                            <div class="autosave-indicator" id="autosave-indicator"></div>
+                        </div>
+
+                        <!-- Note Encryption Panel -->
+                        <div class="note-encrypt-panel" id="note-encrypt-panel" style="display:none;">
+                            <div class="panel-header">🔒 Extra Note Encryption</div>
+                            <p class="panel-desc">Protect this note with an additional password beyond your master password.</p>
+                            <div class="input-group">
+                                <input type="password" id="note-extra-password" placeholder="Extra note password" class="input-field">
+                                <button type="button" class="eye-btn" onclick="togglePasswordVisibility('note-extra-password', this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Decrypt panel (shown when opening a double-encrypted note) -->
+                        <div class="note-decrypt-panel" id="note-decrypt-panel" style="display:none;">
+                            <div class="panel-header">🔐 This note is double-encrypted</div>
+                            <p class="panel-desc">Enter the extra password to unlock the full content of this note.</p>
+                            <div class="input-group">
+                                <input type="password" id="note-decrypt-extra-password" placeholder="Extra note password" class="input-field">
+                                <button type="button" class="eye-btn" onclick="togglePasswordVisibility('note-decrypt-extra-password', this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <button onclick="decryptNoteContent()" class="btn btn-success">🔓 Unlock Note</button>
+                        </div>
+
+                        <div class="note-actions">
+                            <button onclick="saveNote()" class="btn btn-success">💾 Save Note</button>
+                            <button onclick="toggleNoteEncryption()" class="btn btn-primary" id="toggle-encrypt-btn">🔒 Add Extra Lock</button>
+                            <button onclick="closeNoteEditor()" class="btn btn-secondary">Cancel</button>
+                            <button onclick="deleteCurrentNote()" class="btn btn-danger" id="delete-note-btn" style="display:none;">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="section">
+                <div class="section-header">
+                    <h2>Settings</h2>
+                </div>
+
+                <div class="settings-group">
+                    <h3>🔑 Password Tools</h3>
+                    <button onclick="changeMasterPassword()" class="btn btn-primary">Change Master Password</button>
+                    <button onclick="generateAndShowPassword()" class="btn btn-primary">🎲 Generate Strong Password</button>
+                    <div id="generated-password-display" style="display:none;" class="generated-password-box">
+                        <p class="generated-label">Generated Password:</p>
+                        <div class="generated-password-row">
+                            <code id="generated-password-text"></code>
+                            <button onclick="copyGeneratedPassword()" class="btn btn-secondary btn-sm">📋 Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>📦 Data Management</h3>
+                    <button onclick="exportData()" class="btn btn-primary">📥 Export Encrypted Data</button>
+                    <button onclick="importData()" class="btn btn-primary">📤 Import Data</button>
+                </div>
+
+                <div class="settings-group">
+                    <h3>💾 Storage Usage</h3>
+                    <div id="storage-info-display">
+                        <button onclick="refreshStorageInfo()" class="btn btn-secondary">Check Storage</button>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>ℹ️ About</h3>
+                    <p><strong>Version:</strong> 1.1.0</p>
+                    <p><strong>Encryption:</strong> AES-256</p>
+                    <p><strong>Storage:</strong> Browser Local Storage</p>
+                    <p><strong>Privacy:</strong> Zero-Knowledge Architecture</p>
+                </div>
+
+                <div class="settings-group danger-zone">
+                    <h3>⚠️ Danger Zone</h3>
+                    <p>This will permanently delete all your encrypted data</p>
+                    <button onclick="deleteAllData()" class="btn btn-danger">Delete All Data</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- EXTRA LOCK WARNING MODAL -->
+    <div id="extra-lock-warning-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box warning-modal">
+            <div class="modal-icon">⚠️</div>
+            <h3>Important Warning</h3>
+            <p>You are about to add an <strong>extra password</strong> to this note.</p>
+            <div class="warning-points">
+                <div class="warning-point">
+                    <span class="warning-point-icon">🔒</span>
+                    <span>This note will be locked with a second password on top of your master password</span>
+                </div>
+                <div class="warning-point">
+                    <span class="warning-point-icon">❌</span>
+                    <span>If you forget this extra password, <strong>the note content cannot be recovered</strong> — not even by us</span>
+                </div>
+                <div class="warning-point">
+                    <span class="warning-point-icon">💡</span>
+                    <span>Write down the password somewhere safe before setting it</span>
+                </div>
+            </div>
+            <p class="warning-modal-footer">This is a zero-knowledge system. No backdoor exists.</p>
+            <div class="modal-actions">
+                <button onclick="NoteManager.confirmExtraLock()" class="btn btn-primary">I Understand, Continue</button>
+                <button onclick="NoteManager.cancelExtraLock()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOCK SCREEN OVERLAY -->
+    <div id="lock-overlay" style="display:none;">
+        <div class="lock-overlay-bg"></div>
+        <div class="lock-box">
+            <div class="lock-icon">🔒</div>
+            <h3>Vault Locked</h3>
+            <p>Your session expired. Enter your master password to continue.</p>
+            <div class="input-group">
+                <input type="password" id="lock-password" placeholder="Master Password" class="input-field" onkeydown="if(event.key==='Enter') unlockFromOverlay()">
+                <button type="button" class="eye-btn" onclick="togglePasswordVisibility('lock-password', this)"><i class="fas fa-eye"></i></button>
+            </div>
+            <button onclick="unlockFromOverlay()" class="btn btn-primary btn-full">Unlock</button>
+            <button onclick="logoutFromOverlay()" class="link-btn" style="display:block; text-align:center; margin-top:0.75rem;">Sign out instead</button>
+        </div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/encryption.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/fileHandler.js"></script>
+    <script src="js/noteManager.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
+
